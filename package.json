@@ -1,0 +1,25 @@
+{
+  "name": "shell-logo",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Render colorful ASCII art logos in the terminal from a config file",
+  "license": "MIT",
+  "author": "Rafael Chiti",
+  "bin": {
+    "shell-logo": "./src/index.js"
+  },
+  "keywords": ["cli", "terminal", "ascii-art", "logo", "figlet", "gradient"],
+  "engines": {
+    "node": ">=18"
+  },
+  "files": ["src/", "examples/"],
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "figlet": "^1.8.0",
+    "@clack/prompts": "^0.11.0",
+    "gradient-string": "^3.0.0"
+  }
+}
