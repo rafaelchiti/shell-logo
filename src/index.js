@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+/**
+ * Entry point for shell-logo.
+ *
+ * 1. Run the interactive UI to get a config + session mode (persistent or temporary).
+ * 2. If the user chose "Generate", persist the new config to disk.
+ * 3. Start the fullscreen render loop with arrow-key theme/font cycling.
+ */
+
 import { runInteractiveUI } from './ui.js';
 import { writeConfig } from './generate.js';
 import { render } from './renderer.js';
@@ -10,56 +16,26 @@ import { THEMES, FONTS } from './themes.js';
 import chalk from 'chalk';
 import * as p from '@clack/prompts';
 
-const { action, config } = await runInteractiveUI();
+const { action, config, persistent } = await runInteractiveUI();
 
 if (action === 'generate') {
   const s = p.spinner();
-  s.start('Writing .shell-logo.json...');
+  s.start('Saving config...');
   writeConfig(config);
   s.stop('Config saved!');
-
-  const isGitRepo = existsSync(join(process.cwd(), '.git'));
-  const gitignorePath = join(process.cwd(), '.gitignore');
-  let shouldPrompt = isGitRepo;
-
-  if (existsSync(gitignorePath)) {
-    const content = readFileSync(gitignorePath, 'utf-8');
-    const lines = content.split('\n').map(l => l.trim());
-    if (lines.includes('.shell-logo.json')) {
-      shouldPrompt = false;
-    }
-  }
-
-  if (shouldPrompt) {
-    const addToGitignore = await p.select({
-      message: 'Add .shell-logo.json to .gitignore?',
-      options: [
-        { value: true, label: 'Yes (recommended)' },
-        { value: false, label: 'No' },
-      ],
-    });
-
-    if (p.isCancel(addToGitignore)) {
-      p.cancel('Cancelled.');
-      process.exit(0);
-    }
-
-    if (addToGitignore) {
-      if (existsSync(gitignorePath)) {
-        const existing = readFileSync(gitignorePath, 'utf-8');
-        const separator = existing.endsWith('\n') ? '' : '\n';
-        writeFileSync(gitignorePath, existing + separator + '.shell-logo.json\n');
-      } else {
-        writeFileSync(gitignorePath, '.shell-logo.json\n');
-      }
-      p.log.success('.gitignore updated.');
-    }
-  }
 }
 
-startRenderLoop(config);
+startRenderLoop(config, persistent);
 
-function startRenderLoop(config) {
+/**
+ * Fullscreen render loop. Draws the logo centered in the terminal and
+ * listens for arrow keys to cycle themes (up/down) and fonts (left/right).
+ *
+ * @param {object}  config     - Logo config: { text, colors, font }
+ * @param {boolean} persistent - When true, arrow key changes are saved to disk.
+ *                               When false (temporary session), changes are in-memory only.
+ */
+function startRenderLoop(config, persistent) {
   let resizeTimer;
 
   // Find the current theme index by matching colors
@@ -85,6 +61,7 @@ function startRenderLoop(config) {
     }
   }
 
+  /** Briefly show the status bar (theme name, font, controls) for 2 seconds. */
   function flashStatus() {
     showStatus = true;
     clearTimeout(statusTimer);
@@ -94,6 +71,7 @@ function startRenderLoop(config) {
     }, 2000);
   }
 
+  /** Debounce re-renders on terminal resize to avoid flickering. */
   function debouncedRender() {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(renderLoop, 50);
@@ -140,7 +118,8 @@ function startRenderLoop(config) {
       } else {
         return;
       }
-      writeConfig(config);
+      // Only persist theme/font changes in a persistent (non-temporary) session
+      if (persistent) writeConfig(config);
       flashStatus();
       renderLoop();
     }

@@ -1,3 +1,17 @@
+/**
+ * Interactive CLI prompts for shell-logo.
+ *
+ * When a config already exists for the current folder, presents three options:
+ *   - Run          — display the logo, arrow key changes persist to disk
+ *   - New session  — display the logo, changes are in-memory only (temporary)
+ *   - Generate     — walk through the setup wizard to create a new config
+ *
+ * When no config exists, only the Generate option is shown.
+ *
+ * Returns { action, config, persistent } where `persistent` controls
+ * whether arrow key theme/font changes are saved back to disk.
+ */
+
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import { tryLoadConfig } from './config.js';
@@ -39,6 +53,7 @@ const FONT_OPTIONS = [
   { value: 'Fire Font-k', label: 'Fire Font-k' },
 ];
 
+/** Exit gracefully if the user presses Ctrl+C / Escape during a prompt. */
 function handleCancel(value) {
   if (p.isCancel(value)) {
     p.cancel('Cancelled.');
@@ -47,6 +62,7 @@ function handleCancel(value) {
   return value;
 }
 
+/** Walk the user through the Generate wizard: text, colors, font. */
 async function promptGenerate() {
   const text = handleCancel(
     await p.text({
@@ -87,21 +103,53 @@ async function promptGenerate() {
   return {
     action: 'generate',
     config: { text: text.trim(), colors, font },
+    persistent: true,
   };
 }
 
+/**
+ * Main entry point for the interactive CLI.
+ * Returns { action: 'generate'|'run', config, persistent }.
+ */
 export async function runInteractiveUI() {
   p.intro(chalk.bold('terminal-logo'));
 
-  const hasConfig = !!tryLoadConfig();
+  const existingConfig = tryLoadConfig();
 
+  if (existingConfig) {
+    const action = handleCancel(
+      await p.select({
+        message: 'What would you like to do?',
+        initialValue: 'run',
+        options: [
+          { value: 'run', label: 'Run', hint: 'use saved config' },
+          { value: 'temp', label: 'New session', hint: "temporary, changes won't be saved" },
+          { value: 'generate', label: 'Generate', hint: 'create a new logo config' },
+        ],
+      })
+    );
+
+    if (action === 'generate') {
+      return promptGenerate();
+    }
+
+    if (action === 'temp') {
+      p.outro('Launching logo (temporary session)...');
+      return { action: 'run', config: existingConfig, persistent: false };
+    }
+
+    // action === 'run'
+    p.outro('Launching logo...');
+    return { action: 'run', config: existingConfig, persistent: true };
+  }
+
+  // No existing config — only offer Generate
   const action = handleCancel(
     await p.select({
       message: 'What would you like to do?',
-      initialValue: hasConfig ? 'run' : 'generate',
+      initialValue: 'generate',
       options: [
-        { value: 'generate', label: 'Generate', hint: 'create .shell-logo.json' },
-        { value: 'run', label: 'Run', hint: 'display current logo' },
+        { value: 'generate', label: 'Generate', hint: 'create a new logo config' },
       ],
     })
   );
@@ -109,18 +157,4 @@ export async function runInteractiveUI() {
   if (action === 'generate') {
     return promptGenerate();
   }
-
-  // action === 'run'
-  const config = tryLoadConfig();
-  if (!config) {
-    p.log.error(
-      'No valid .shell-logo.json found in the current directory.\n' +
-        '  Run again and choose "Generate" to create one.'
-    );
-    p.outro('Done');
-    process.exit(1);
-  }
-
-  p.outro('Launching logo...');
-  return { action: 'run', config };
 }
