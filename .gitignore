@@ -2,3 +2,5 @@ node_modules/
 .shell-logo.json
 logo.config.json
 *.tgz
+
+.DS_Store

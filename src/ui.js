@@ -76,7 +76,7 @@ async function promptGenerate() {
 
   return {
     action: 'generate',
-    config: { text: text.trim(), colors, font, padding: 1 },
+    config: { text: text.trim(), colors, font },
   };
 }
 

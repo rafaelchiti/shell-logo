@@ -5,7 +5,6 @@ import chalk from 'chalk';
 export const DEFAULTS = {
   colors: ['#ff6b6b', '#feca57', '#48dbfb'],
   font: 'Standard',
-  padding: 1,
 };
 
 export function tryLoadConfig() {
@@ -39,7 +38,6 @@ export function tryLoadConfig() {
     text: config.text.trim(),
     colors: config.colors ?? DEFAULTS.colors,
     font: config.font ?? DEFAULTS.font,
-    padding: typeof config.padding === 'number' ? config.padding : DEFAULTS.padding,
   };
 }
 
@@ -89,6 +87,5 @@ export function loadConfig() {
     text: config.text.trim(),
     colors: config.colors ?? DEFAULTS.colors,
     font: config.font ?? DEFAULTS.font,
-    padding: typeof config.padding === 'number' ? config.padding : DEFAULTS.padding,
   };
 }

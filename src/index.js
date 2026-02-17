@@ -36,12 +36,11 @@ function startRenderLoop(config) {
 
   function renderLoop() {
     const { columns, rows } = getTerminalSize();
-    const effectiveCols = Math.max(20, columns - config.padding * 4);
-    const art = render(config, effectiveCols);
+    const art = render(config, columns);
     clearScreen();
-    process.stdout.write(centerContent(art, columns, rows, 0));
+    process.stdout.write(centerContent(art, columns, rows));
     if (showStatus) {
-      const status = `  ${THEMES[themeIndex].name}  ·  ${FONTS[fontIndex]}  ·  ↑↓ theme  ←→ font  <> size  q quit`;
+      const status = `  ${THEMES[themeIndex].name}  ·  ${FONTS[fontIndex]}  ·  ↑↓ theme  ←→ font  q quit`;
       process.stdout.write(`\x1B[${rows};1H` + chalk.dim(status));
     }
   }
@@ -106,17 +105,6 @@ function startRenderLoop(config) {
       renderLoop();
     }
 
-    if (key[0] === 62) { // >  — bigger
-      config.padding = Math.max(config.padding - 1, 0);
-      writeConfig(config);
-      flashStatus();
-      renderLoop();
-    } else if (key[0] === 60) { // <  — smaller
-      config.padding = Math.min(config.padding + 1, 20);
-      writeConfig(config);
-      flashStatus();
-      renderLoop();
-    }
   });
   process.on('SIGTERM', cleanup);
 }

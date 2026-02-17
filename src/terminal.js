@@ -20,7 +20,7 @@ export function showCursor() {
   process.stdout.write('\x1B[?25h');
 }
 
-export function centerContent(text, columns, rows, padding) {
+export function centerContent(text, columns, rows) {
   const lines = text.split('\n');
 
   // Calculate the max visual width (strip ANSI codes)

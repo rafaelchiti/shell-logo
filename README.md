@@ -3,7 +3,7 @@
 Now that we are all coding with 1232 terminals open, is kind of hard to quickly find the one you want at a glance.
 Adding a small configurable logo to quickly spot each project.
 
-![screen-capture](assets/mosaic.png)
+![screen-capture](assets/mosaic.jpeg)
 
 ## Install
 
