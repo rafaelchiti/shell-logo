@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { runInteractiveUI } from './ui.js';
 import { writeConfig } from './generate.js';
 import { render } from './renderer.js';
@@ -15,6 +17,44 @@ if (action === 'generate') {
   s.start('Writing .shell-logo.json...');
   writeConfig(config);
   s.stop('Config saved!');
+
+  const isGitRepo = existsSync(join(process.cwd(), '.git'));
+  const gitignorePath = join(process.cwd(), '.gitignore');
+  let shouldPrompt = isGitRepo;
+
+  if (existsSync(gitignorePath)) {
+    const content = readFileSync(gitignorePath, 'utf-8');
+    const lines = content.split('\n').map(l => l.trim());
+    if (lines.includes('.shell-logo.json')) {
+      shouldPrompt = false;
+    }
+  }
+
+  if (shouldPrompt) {
+    const addToGitignore = await p.select({
+      message: 'Add .shell-logo.json to .gitignore?',
+      options: [
+        { value: true, label: 'Yes (recommended)' },
+        { value: false, label: 'No' },
+      ],
+    });
+
+    if (p.isCancel(addToGitignore)) {
+      p.cancel('Cancelled.');
+      process.exit(0);
+    }
+
+    if (addToGitignore) {
+      if (existsSync(gitignorePath)) {
+        const existing = readFileSync(gitignorePath, 'utf-8');
+        const separator = existing.endsWith('\n') ? '' : '\n';
+        writeFileSync(gitignorePath, existing + separator + '.shell-logo.json\n');
+      } else {
+        writeFileSync(gitignorePath, '.shell-logo.json\n');
+      }
+      p.log.success('.gitignore updated.');
+    }
+  }
 }
 
 startRenderLoop(config);
@@ -36,7 +76,7 @@ function startRenderLoop(config) {
 
   function renderLoop() {
     const { columns, rows } = getTerminalSize();
-    const art = render(config, columns);
+    const art = render(config, columns, rows);
     clearScreen();
     process.stdout.write(centerContent(art, columns, rows));
     if (showStatus) {

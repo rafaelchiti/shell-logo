@@ -83,9 +83,12 @@ async function promptGenerate() {
 export async function runInteractiveUI() {
   p.intro(chalk.bold('terminal-logo'));
 
+  const hasConfig = !!tryLoadConfig();
+
   const action = handleCancel(
     await p.select({
       message: 'What would you like to do?',
+      initialValue: hasConfig ? 'run' : 'generate',
       options: [
         { value: 'generate', label: 'Generate', hint: 'create .shell-logo.json' },
         { value: 'run', label: 'Run', hint: 'display current logo' },
