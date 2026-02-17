@@ -27,6 +27,16 @@ const FONT_OPTIONS = [
   { value: 'ANSI Shadow', label: 'ANSI Shadow' },
   { value: 'Slant', label: 'Slant' },
   { value: 'Small', label: 'Small' },
+  { value: 'ANSI Regular', label: 'ANSI Regular' },
+  { value: 'Bloody', label: 'Bloody' },
+  { value: 'DOS Rebel', label: 'DOS Rebel' },
+  { value: 'Graffiti', label: 'Graffiti' },
+  { value: 'Larry 3D', label: 'Larry 3D' },
+  { value: 'Star Wars', label: 'Star Wars' },
+  { value: 'Doh', label: 'Doh' },
+  { value: 'Ghost', label: 'Ghost' },
+  { value: 'Fraktur', label: 'Fraktur' },
+  { value: 'Fire Font-k', label: 'Fire Font-k' },
 ];
 
 function handleCancel(value) {
