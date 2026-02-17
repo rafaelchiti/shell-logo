@@ -31,13 +31,28 @@ function startRenderLoop(config) {
   let fontIndex = FONTS.indexOf(config.font);
   if (fontIndex === -1) fontIndex = 0;
 
+  let showStatus = false;
+  let statusTimer;
+
   function renderLoop() {
     const { columns, rows } = getTerminalSize();
-    const art = render(config, columns);
+    const effectiveCols = Math.max(20, columns - config.padding * 4);
+    const art = render(config, effectiveCols);
     clearScreen();
-    process.stdout.write(centerContent(art, columns, rows, config.padding));
-    const status = `  ${THEMES[themeIndex].name}  ·  ${FONTS[fontIndex]}  ·  ↑↓ theme  ·  ←→ font  ·  q quit`;
-    process.stdout.write('\n\n' + chalk.dim(status));
+    process.stdout.write(centerContent(art, columns, rows, 0));
+    if (showStatus) {
+      const status = `  ${THEMES[themeIndex].name}  ·  ${FONTS[fontIndex]}  ·  ↑↓ theme  ←→ font  <> size  q quit`;
+      process.stdout.write(`\x1B[${rows};1H` + chalk.dim(status));
+    }
+  }
+
+  function flashStatus() {
+    showStatus = true;
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(() => {
+      showStatus = false;
+      renderLoop();
+    }, 2000);
   }
 
   function debouncedRender() {
@@ -56,6 +71,13 @@ function startRenderLoop(config) {
   process.stdin.resume();
   hideCursor();
   renderLoop();
+
+  // Show controls help on startup for 4 seconds
+  showStatus = true;
+  statusTimer = setTimeout(() => {
+    showStatus = false;
+    renderLoop();
+  }, 4000);
 
   process.stdout.on('resize', debouncedRender);
 
@@ -80,6 +102,19 @@ function startRenderLoop(config) {
         return;
       }
       writeConfig(config);
+      flashStatus();
+      renderLoop();
+    }
+
+    if (key[0] === 62) { // >  — bigger
+      config.padding = Math.max(config.padding - 1, 0);
+      writeConfig(config);
+      flashStatus();
+      renderLoop();
+    } else if (key[0] === 60) { // <  — smaller
+      config.padding = Math.min(config.padding + 1, 20);
+      writeConfig(config);
+      flashStatus();
       renderLoop();
     }
   });

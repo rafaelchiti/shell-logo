@@ -1,10 +1,18 @@
 {
   "name": "shell-logo",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "Render colorful ASCII art logos in the terminal from a config file",
   "license": "MIT",
   "author": "Rafael Chiti",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rafaelchiti/shell-logo.git"
+  },
+  "homepage": "https://github.com/rafaelchiti/shell-logo",
+  "bugs": {
+    "url": "https://github.com/rafaelchiti/shell-logo/issues"
+  },
   "bin": {
     "shell-logo": "./src/index.js"
   },

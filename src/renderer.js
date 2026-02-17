@@ -24,7 +24,7 @@ export function render(config, columns) {
     const art = figletSync(config.text, font);
     if (art && maxLineWidth(art) <= columns) {
       const grad = gradient(config.colors);
-      return grad.multiline(art);
+      return grad.multiline(art.trimEnd());
     }
   }
 

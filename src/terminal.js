@@ -35,10 +35,8 @@ export function centerContent(text, columns, rows, padding) {
 
   const paddedLines = lines.map((line) => padStr + line);
 
-  // Vertical centering
-  const contentHeight = paddedLines.length + padding;
+  const contentHeight = paddedLines.length;
   const topPad = Math.max(0, Math.floor((rows - contentHeight) / 2));
 
-  const verticalPadding = '\n'.repeat(padding);
-  return '\n'.repeat(topPad) + verticalPadding + paddedLines.join('\n');
+  return '\n'.repeat(topPad) + paddedLines.join('\n');
 }
