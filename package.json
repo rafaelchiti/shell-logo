@@ -1,6 +1,6 @@
 {
   "name": "shell-logo",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "description": "Render colorful ASCII art logos in the terminal from a config file",
   "license": "MIT",
