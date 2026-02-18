@@ -18,7 +18,7 @@ export function render(config, columns, rows) {
       const grad = gradient(config.colors);
       return grad(config.shape);
     }
-    const trimmed = shape.art.trim();
+    const trimmed = shape.art.replace(/^\n+/, '').trimEnd();
     const scaled = scaleArt(trimmed, columns, rows - 2);
     const grad = gradient(config.colors);
     return grad.multiline(scaled);
