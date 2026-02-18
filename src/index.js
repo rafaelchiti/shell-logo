@@ -13,6 +13,7 @@ import { writeConfig } from './generate.js';
 import { render } from './renderer.js';
 import { getTerminalSize, clearScreen, hideCursor, showCursor, centerContent } from './terminal.js';
 import { THEMES, FONTS } from './themes.js';
+import { SHAPES } from './shapes.js';
 import chalk from 'chalk';
 import * as p from '@clack/prompts';
 
@@ -38,6 +39,8 @@ startRenderLoop(config, persistent);
 function startRenderLoop(config, persistent) {
   let resizeTimer;
 
+  const isShapeMode = config.mode === 'shape';
+
   // Find the current theme index by matching colors
   let themeIndex = THEMES.findIndex(
     (t) => JSON.stringify(t.colors) === JSON.stringify(config.colors)
@@ -46,6 +49,11 @@ function startRenderLoop(config, persistent) {
 
   let fontIndex = FONTS.indexOf(config.font);
   if (fontIndex === -1) fontIndex = 0;
+
+  let shapeIndex = isShapeMode
+    ? SHAPES.findIndex((s) => s.name === config.shape)
+    : 0;
+  if (shapeIndex === -1) shapeIndex = 0;
 
   let showStatus = false;
   let statusTimer;
@@ -56,7 +64,10 @@ function startRenderLoop(config, persistent) {
     clearScreen();
     process.stdout.write(centerContent(art, columns, rows));
     if (showStatus) {
-      const status = `  ${THEMES[themeIndex].name}  ·  ${FONTS[fontIndex]}  ·  ↑↓ theme  ←→ font  q quit`;
+      const lrLabel = isShapeMode
+        ? `${SHAPES[shapeIndex].name}  ·  ←→ shape`
+        : `${FONTS[fontIndex]}  ·  ←→ font`;
+      const status = `  ${THEMES[themeIndex].name}  ·  ${lrLabel}  ·  ↑↓ theme  q quit`;
       process.stdout.write(`\x1B[${rows};1H` + chalk.dim(status));
     }
   }
@@ -109,12 +120,22 @@ function startRenderLoop(config, persistent) {
       } else if (key[2] === 66) { // Arrow Down — next theme
         themeIndex = (themeIndex + 1) % THEMES.length;
         config.colors = THEMES[themeIndex].colors;
-      } else if (key[2] === 67) { // Arrow Right — next font
-        fontIndex = (fontIndex + 1) % FONTS.length;
-        config.font = FONTS[fontIndex];
-      } else if (key[2] === 68) { // Arrow Left — prev font
-        fontIndex = (fontIndex - 1 + FONTS.length) % FONTS.length;
-        config.font = FONTS[fontIndex];
+      } else if (key[2] === 67) { // Arrow Right — next font/shape
+        if (isShapeMode) {
+          shapeIndex = (shapeIndex + 1) % SHAPES.length;
+          config.shape = SHAPES[shapeIndex].name;
+        } else {
+          fontIndex = (fontIndex + 1) % FONTS.length;
+          config.font = FONTS[fontIndex];
+        }
+      } else if (key[2] === 68) { // Arrow Left — prev font/shape
+        if (isShapeMode) {
+          shapeIndex = (shapeIndex - 1 + SHAPES.length) % SHAPES.length;
+          config.shape = SHAPES[shapeIndex].name;
+        } else {
+          fontIndex = (fontIndex - 1 + FONTS.length) % FONTS.length;
+          config.font = FONTS[fontIndex];
+        }
       } else {
         return;
       }

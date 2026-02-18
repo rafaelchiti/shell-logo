@@ -15,6 +15,8 @@
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import { tryLoadConfig } from './config.js';
+import { SHAPES } from './shapes.js';
+import { FONTS } from './themes.js';
 
 const COLOR_PALETTE = [
   { value: '#ff6b6b', label: `${chalk.bgHex('#ff6b6b')('   ')} Coral` },
@@ -35,23 +37,7 @@ const COLOR_PALETTE = [
   { value: '#ffffff', label: `${chalk.bgHex('#ffffff')('   ')} White` },
 ];
 
-const FONT_OPTIONS = [
-  { value: 'Standard', label: 'Standard' },
-  { value: 'Big', label: 'Big' },
-  { value: 'ANSI Shadow', label: 'ANSI Shadow' },
-  { value: 'Slant', label: 'Slant' },
-  { value: 'Small', label: 'Small' },
-  { value: 'ANSI Regular', label: 'ANSI Regular' },
-  { value: 'Bloody', label: 'Bloody' },
-  { value: 'DOS Rebel', label: 'DOS Rebel' },
-  { value: 'Graffiti', label: 'Graffiti' },
-  { value: 'Larry 3D', label: 'Larry 3D' },
-  { value: 'Star Wars', label: 'Star Wars' },
-  { value: 'Doh', label: 'Doh' },
-  { value: 'Ghost', label: 'Ghost' },
-  { value: 'Fraktur', label: 'Fraktur' },
-  { value: 'Fire Font-k', label: 'Fire Font-k' },
-];
+const FONT_OPTIONS = FONTS.map(f => ({ value: f, label: f }));
 
 /** Exit gracefully if the user presses Ctrl+C / Escape during a prompt. */
 function handleCancel(value) {
@@ -62,19 +48,8 @@ function handleCancel(value) {
   return value;
 }
 
-/** Walk the user through the Generate wizard: text, colors, font. */
-async function promptGenerate() {
-  const text = handleCancel(
-    await p.text({
-      message: 'What text should the logo display?',
-      placeholder: 'HELLO',
-      validate: (val) => {
-        if (!val || val.trim() === '') return 'Text is required.';
-      },
-    })
-  );
-
-  // Pick 3 random unique colors as defaults
+/** Prompt for gradient colors (shared by text and shape modes). */
+async function promptColors() {
   const shuffled = [...COLOR_PALETTE].sort(() => Math.random() - 0.5);
   const initialColors = shuffled.slice(0, 3).map(c => c.value);
 
@@ -92,6 +67,40 @@ async function promptGenerate() {
     if (colors.length >= 2) break;
     p.log.warning('Please select at least 2 colors.');
   }
+  return colors;
+}
+
+/** Walk the user through the Shape wizard: shape picker, colors. */
+async function promptShapeGenerate() {
+  const shape = handleCancel(
+    await p.select({
+      message: 'Pick a mascot:',
+      options: SHAPES.map((s) => ({ value: s.name, label: s.name })),
+    })
+  );
+
+  const colors = await promptColors();
+
+  return {
+    action: 'generate',
+    config: { mode: 'shape', shape, colors },
+    persistent: true,
+  };
+}
+
+/** Walk the user through the Text wizard: text, colors, font. */
+async function promptTextGenerate() {
+  const text = handleCancel(
+    await p.text({
+      message: 'What text should the logo display?',
+      placeholder: 'HELLO',
+      validate: (val) => {
+        if (!val || val.trim() === '') return 'Text is required.';
+      },
+    })
+  );
+
+  const colors = await promptColors();
 
   const font = handleCancel(
     await p.select({
@@ -102,9 +111,25 @@ async function promptGenerate() {
 
   return {
     action: 'generate',
-    config: { text: text.trim(), colors, font },
+    config: { mode: 'text', text: text.trim(), colors, font },
     persistent: true,
   };
+}
+
+/** Walk the user through the Generate wizard: mode selection, then mode-specific prompts. */
+async function promptGenerate() {
+  const mode = handleCancel(
+    await p.select({
+      message: 'What kind of logo?',
+      options: [
+        { value: 'text', label: 'Text', hint: 'type your own text' },
+        { value: 'shape', label: 'Shape', hint: 'pick a mascot/pet' },
+      ],
+    })
+  );
+
+  if (mode === 'shape') return promptShapeGenerate();
+  return promptTextGenerate();
 }
 
 /**

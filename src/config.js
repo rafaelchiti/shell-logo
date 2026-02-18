@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import chalk from 'chalk';
 import { configPath, legacyConfigPath } from './paths.js';
 import { writeConfig } from './generate.js';
+import { SHAPE_NAMES } from './shapes.js';
 
 export const DEFAULTS = {
   colors: ['#ff6b6b', '#feca57', '#48dbfb'],
@@ -21,7 +22,11 @@ export const DEFAULTS = {
 
 /**
  * Parse a JSON string and validate it as a shell-logo config.
- * Requires a non-empty `text` field. Colors must be an array of 2+ if present.
+ *
+ * Supports two modes:
+ *   - "text" (default): requires non-empty `text`, optional `colors`/`font`
+ *   - "shape": requires valid `shape` name, optional `colors`, no `text`/`font` needed
+ *
  * Returns a normalized config object, or null if invalid.
  */
 function parseAndValidate(raw) {
@@ -32,17 +37,32 @@ function parseAndValidate(raw) {
     return null;
   }
 
-  if (!config.text || typeof config.text !== 'string' || config.text.trim() === '') {
-    return null;
-  }
-
   if (config.colors !== undefined) {
     if (!Array.isArray(config.colors) || config.colors.length < 2) {
       return null;
     }
   }
 
+  const mode = config.mode ?? 'text';
+
+  if (mode === 'shape') {
+    if (!config.shape || !SHAPE_NAMES.includes(config.shape)) {
+      return null;
+    }
+    return {
+      mode: 'shape',
+      shape: config.shape,
+      colors: config.colors ?? DEFAULTS.colors,
+    };
+  }
+
+  // mode === 'text' (or absent for backward compatibility)
+  if (!config.text || typeof config.text !== 'string' || config.text.trim() === '') {
+    return null;
+  }
+
   return {
+    mode: 'text',
     text: config.text.trim(),
     colors: config.colors ?? DEFAULTS.colors,
     font: config.font ?? DEFAULTS.font,
