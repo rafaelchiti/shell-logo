@@ -22,6 +22,8 @@ export const FONTS = [
   // typical ASCII slashes and pipes, giving a "painted pixels" look.
   'Block', 'Blocks', 'Shaded Blocky', 'Small Block',
   'Dot Matrix', 'Tiles', 'Rectangles',
+  'Electronic', 'Elite', 'Rebel',
+  'ANSI Compact', 'Pagga', 'Delta Corps Priest 1',
 
   // Popular classic figlet fonts
   'Doom', 'Banner3-D', 'Colossal', 'Epic',
